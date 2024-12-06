@@ -5,14 +5,14 @@ fn main() {
     let mut second_list: Vec<i32> = Vec::new();
 
     loop {
-        let numbers = read_numbers();
-        if numbers.is_none() {
-            break;
+        match read_numbers() {
+            None => break,
+            Some(numbers) => {
+                let (first, second) = numbers;
+                first_list.push(first);
+                second_list.push(second);
+            }
         }
-
-        let (first, second) = numbers.unwrap();
-        first_list.push(first);
-        second_list.push(second);
     }
 
     let score = get_similarity(&first_list, &second_list);
