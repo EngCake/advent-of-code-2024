@@ -6,15 +6,15 @@ use shared::{position::Position, stdin::read_line};
 fn main() {
     let map = Map::from_stdin();
     let mut result = 0;
-    for i in 0..map.rows() {
-        for j in 0..map.cols() {
-            let position = (i, j).into();
-            let modified_map = map.with_obstacle_at(position);
-            if detect_cycles(&modified_map) {
-                result += 1;
-            }
+
+    let positions = get_partol_positions(&map);
+    for position in positions.iter() {
+        let modified_map = map.with_obstacle_at(position);
+        if detect_cycles(&modified_map) {
+            result += 1;
         }
     }
+
     println!("{}", result);
 }
 
@@ -39,6 +39,23 @@ fn detect_cycles(map: &Map) -> bool {
     }
 
     false
+}
+
+fn get_partol_positions(map: &Map) -> HashSet<Position> {
+    let mut guard_position = map.guard_starting_position;
+    let mut guard_direction = (-1, 0).into();
+    let mut visited_positions = HashSet::new();
+
+    while map.contains(guard_position) {
+        visited_positions.insert(guard_position);
+        match map.at(guard_position + guard_direction) {
+            Some(CellState::Empty) => guard_position += guard_direction,
+            Some(CellState::Obstacle) => guard_direction = guard_direction.rotate_clockwise(),
+            None => break,
+        }
+    }
+
+    visited_positions
 }
 
 #[derive(Clone, Copy)]
@@ -78,15 +95,7 @@ impl Map {
         }
     }
 
-    fn rows(&self) -> usize {
-        self.cells.len()
-    }
-
-    fn cols(&self) -> usize {
-        self.cells[0].len()
-    }
-
-    fn with_obstacle_at(&self, position: Position) -> Map {
+    fn with_obstacle_at(&self, position: &Position) -> Map {
         let mut copy = Self {
             guard_starting_position: self.guard_starting_position,
             cells: self.cells.clone(),
